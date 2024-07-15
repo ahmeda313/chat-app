@@ -63,6 +63,7 @@ io.on('connection',(socket)=>{
         if(rooms.length===0){
             fs.readdir(path.join(__dirname,"files"),(err,files)=>{
                 for(const file of files){
+                    if(files.length===0) break
                     fs.unlink(path.join(__dirname,"files",file),(err)=>{
                         // console.log(err)
                     })
@@ -125,6 +126,7 @@ io.on('connection',(socket)=>{
         if(rooms.length===0){
             fs.readdir(path.join(__dirname,"files"),(err,files)=>{
                 for(const file of files){
+                    if(files.length===0) break
                     fs.unlink(path.join(__dirname,"files",file),(err)=>{
                         // console.log(err)
                     })
