@@ -86,6 +86,10 @@ io.on('connection',(socket)=>{
             return
         }
 
+        if (!fs.existsSync("files")){
+            fs.mkdirSync("files");
+        }
+
         fs.writeFile(path.join(__dirname,"files",file.fileName),Buffer.from(file.fileContent),err=>{
             // console.log(err)
         })
