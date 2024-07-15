@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat App</title>
+    <style>
+        body {
+            /* position: fixed; */
+            padding: 0;
+            margin: 0;
+            width: 100%;
+            height: 100vh;
+            /* overflow-x:hidden ; */
+        }
+        .joinRoom{
+            display: flex;
+            flex-direction:column ;
+            align-items: center;
+        }
+        .joinRoom input{
+            border: 1px solid gray;
+            width: 50%;
+            height: 2.2rem;
+            font-size: 1.7rem;
+            margin: 1rem;
+        }
+        input:focus, input:active{
+            border: 1px solid black;
+            outline: none;
+        }
+        .joinRoom button{
+            width: 15%;
+            height: 2rem;
+            background-color: gray;
+            border: none;
+            cursor: pointer;
+        }
+        .hidden{
+            display: none;
+        }
+        .msgInputSec{
+            position:fixed;
+            bottom: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+            height: 5rem;
+            background-color: white;
+        }
+        .msgInputSec input[type=text]{
+            border: 1px solid gray;
+            height: 2.2rem;
+            font-size: 1.7rem;
+            margin: 0 1rem;
+            width: 70%;
+            margin-bottom:2rem ;
+        }
+        .msgInputSec button{
+            display: inline;
+            background-color: gray;
+            border: none;
+            cursor: pointer;
+            margin: 0 0.5rem;
+            min-width: 50%;
+            height: 2.2rem;
+            margin-left: 0;
+
+        }
+        .sendSec{
+            display: grid;
+            min-width: 30%;
+            height: 2.2rem;
+            grid-template-columns: 1fr 1fr;
+            row-gap: 0.5rem;
+
+
+        }
+        .sendSec #file{
+            display: none;
+        }
+        .sendSec .browse{
+            display: inline;
+            background-color: gray;
+            border: none;
+            cursor: pointer;
+            min-width: 50%;
+            height: 100%;
+            font-size: 13.33px;
+            font-family: Arial, Helvetica, sans-serif;
+            padding-top: 10px;
+            box-sizing:border-box;
+            text-align: center;
+            margin-right: 0.5rem;
+
+        }
+
+        .msgs{
+            padding: 1rem;
+            padding-bottom: 10rem;
+        }
+        .msg{
+            font-size: 1rem;
+            /* text-align: end; */
+            border: 1px solid black;
+            border-radius: 50px;
+            padding: 1rem;
+            padding-top: 0;
+            min-width: fit-content;
+            max-width:fit-content;
+            margin: 0.5rem;
+        }
+        .msgSent{
+            margin-left: auto;
+            border-bottom-right-radius: 0;
+        }
+        .msgReceived{
+            border-bottom-left-radius: 0;
+        }
+        .msg p{
+            margin: 0;
+        }
+        .msg sub{
+            display: block;
+            text-align: left;
+            color: gray;
+            margin-left: 0rem;
+            padding: 0.5rem;
+        }
+        .msg .image img, video{
+            object-fit: contain;
+            min-height: min-content;
+            max-height: 150px;
+            border-radius: 50px;
+
+        }
+
+        .senderName{
+            padding: 10px;
+            border: 1px solid black;
+            border-radius: 50%
+        }
+        .joinAlert{
+            display: block;
+            color: gray;
+            text-align: center;
+        }
+        .joinAlert span{
+            color: black;
+        }
+        #leave{
+            /* position: absolute;
+            bottom: 5%; */
+            background-color: gray;
+            border: none;
+            cursor: pointer;
+            right:0;
+            min-width: 50%;
+            z-index: 999;
+            grid-column:1/3;
+            margin-left: 0;
+        }
+        #error{
+            color: white;
+            width: 20ch;
+            display: inline-block;
+           /* border: 1px solid red; */
+            padding: 1rem;
+            position: absolute;
+            top: 10%;
+            right: 10%;
+            transition: all 1s;
+            background-color: rgba(255, 0, 0, 0.649);
+            z-index: 999;
+        }
+
+        #error h2{
+            margin-top: 0;
+        }
+
+    </style>
+</head>
+<body>
+    <h1>Socket.io</h1>
+    <div class="joinRoom">
+        <h2>Join room</h2>
+        <sup>(room is created if roomID does not exist, if roomID already exists you are joined to the same room)</sup>
+        <input type="text" name="name" id="name" placeholder="Enter your name">
+        <input type="text" name="roomId" id="roomId" placeholder="Enter room id">
+        <button id="subRoomId"> Join</button>
+    </div>
+    <div class="msgInterface hidden">
+        <div class="msgs">
+
+
+        </div>
+        <div class="msgInputSec">
+            <input type="text"  name="msgInput" id="msgInput">
+            <div class="sendSec">
+                <button id="send"> Send</button>
+
+                <label for="file" class="browse">Send file</label>
+                <input type="file" id="file" accept="audio/*,video/*,image/*" >
+                <button id="leave">leave room</button>
+            </div>
+
+        </div>
+
+    </div>
+
+</body>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    const socket = io()
+
+    const name = document.getElementById('name')
+    const roomId = document.getElementById('roomId')
+    const joinBtn = document.getElementById('subRoomId')
+    const leaveBtn = document.getElementById('leave')
+
+
+    const messageInput = document.getElementById('msgInput')
+    const messages = document.getElementsByClassName('msgs')[0]
+    const sendBtn = document.getElementById('send')
+
+    const joiningSec = document.getElementsByClassName('joinRoom')[0]
+    const msgSec = document.getElementsByClassName('msgInterface')[0]
+
+    const fileElement = document.getElementById('file')
+
+    joinBtn.addEventListener('click',(e)=>{
+        if(name.value=="" || roomId.value=="") return
+        try {
+            if(roomId.value.length<8){
+            throw new Error("Room length must be 8 character can be alphabets and numbers")
+        }
+            
+        } catch (error) {
+            uiForError(error)
+            return
+        }
+
+        socket.connect()
+
+        socket.emit('joinRoom',roomId.value,name.value)
+
+        joiningSec.classList.add('hidden')
+        msgSec.classList.remove('hidden')
+
+        socket.emit('userJoined',name.value)
+
+    })
+
+    window.addEventListener("beforeunload",(e)=>{
+        socket.emit("leaveRoom",name.value,roomId.value)
+    })
+
+
+    socket.on("userJoined",(name)=>{
+            const element =`<sup class="joinAlert"><span>${name}</span> joined the chat</sup>`
+            messages.insertAdjacentHTML('beforeend',element)
+        })
+    
+    socket.on("existingUsers",(allUsers)=>{
+        if(allUsers.length!==0){
+            const element =`<sup class="joinAlert"><span>${allUsers.toString()}</span>, in the chat</sup>`
+            messages.insertAdjacentHTML('beforeend',element)
+        }
+        return
+    })
+
+    leaveBtn.addEventListener('click',(e)=>{
+            socket.emit("leaveRoom",name.value,roomId.value)
+
+            joiningSec.classList.remove('hidden')
+            msgSec.classList.add('hidden')
+            messages.innerHTML=""
+        })
+
+    socket.on("userLeft",(name)=>{
+            const element =`<sup class="joinAlert"><span>${name}</span> left the chat</sup>`
+            messages.insertAdjacentHTML('beforeend',element)
+        })
+
+        sendBtn.addEventListener('click',(e)=>{
+            if(messageInput.value.trim()==="") return
+            socket.emit('message',messageInput.value,socket.id,name.value)
+            messageInput.value=""
+        })
+
+        socket.on('message',(msg,id,userName)=>{
+            const messageElement = `            
+            <div class="msgContainer">
+                <div class="msg ${id===socket.id?"msgSent":"msgReceived"}">
+                    <sub>${userName}</sub>
+                    <p>${msg}</p>
+                </div>
+            </div>` 
+
+            messages.insertAdjacentHTML('beforeend',messageElement)
+        })
+
+
+    fileElement.addEventListener('change',(e)=>{
+        const selectedFile = fileElement.files[0]
+        try {
+
+            if(selectedFile){
+                if(selectedFile.size>2000000){
+                    console.log("file tooo large")
+                    throw new Error("file size too large")
+                }
+            } else{
+                return
+            }
+        }
+        catch (error) {
+                uiForError(error)
+                return
+        }
+                const reader = new FileReader()
+                reader.onload=(e)=>{
+
+                    const fileData = {
+                        fileName:selectedFile.name,
+                        fileType:selectedFile.type,
+                        fileContent:e.target.result,
+                    }
+
+                    socket.emit('fileSent',fileData,roomId.value,socket.id,name.value)
+                    
+                }
+
+                reader.readAsArrayBuffer(selectedFile)
+
+        })
+    
+
+
+        socket.on("fileBroadcast",(fileData,userId,userName)=>{
+            const messageElement = `            
+            <div class="msgContainer">
+                <div class="msg ${userId===socket.id?"msgSent":"msgReceived"}">
+                    <sub>${userName}</sub>
+                    <div class="image">
+                    ${fileData.Type.startsWith("image")?`<img src="http://localhost:3000/${fileData.Name}" alt="${fileData.Name}">`:
+                    `<${fileData.Type.startsWith("video")?`video`:`audio`} controls> 
+                            <source src="http://localhost:3000/${fileData.Name}" type="audio/mpeg"> 
+                            Your browser does not support the audio tag. 
+                        </${fileData.Type.startsWith("video")?`video`:`audio`}>`}
+                        
+
+                    </div>
+                    
+                </div>
+            </div>` 
+
+            messages.insertAdjacentHTML('beforeend',messageElement)
+        })
+
+        socket.on("abruptDisconnection",(disconnectionMsg)=>{
+            console.log(disconnectionMsg)
+            const element =`<sup class="joinAlert">${disconnectionMsg}</sup>`
+            messages.insertAdjacentHTML('beforeend',element)
+        })
+
+        socket.on("error",(errMsg)=>{
+            try{
+                throw new Error(errMsg)
+            }catch(e){
+                uiForError(e)
+                return
+            }
+        })
+
+
+        const uiForError = (error)=>{
+            
+            let errorElement = document.getElementById("error")
+
+            const element =`            
+                <div id="error">
+                        <h2>Error</h2>
+                        ${error.message}
+                </div>`
+
+            if(errorElement){
+                errorElement.innerHTML=` <h2>Error</h2>${error.message}`
+                errorElement.style.display="block"
+            }else{
+
+                document.body.insertAdjacentHTML('afterbegin',element)
+                errorElement = document.getElementById("error")
+            }
+                setTimeout(()=>{
+                    errorElement.style.display="none"
+                },3000)
+        }
+
+</script>
+</html>
