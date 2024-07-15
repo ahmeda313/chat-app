@@ -87,7 +87,9 @@ io.on('connection',(socket)=>{
         }
 
         if (!fs.existsSync("files")){
-            fs.mkdirSync("files");
+            fs.mkdirSync("files")
+            app.use(express.static("files"))
+
         }
 
         fs.writeFile(path.join(__dirname,"files",file.fileName),Buffer.from(file.fileContent),err=>{
