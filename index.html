@@ -298,6 +298,7 @@
             </div>` 
 
             messages.insertAdjacentHTML('beforeend',messageElement)
+            window.scrollTo({top:document.body.scrollHeight,behavior:"smooth"})
         })
 
 
@@ -343,19 +344,19 @@
                 <div class="msg ${userId===socket.id?"msgSent":"msgReceived"}">
                     <sub>${userName}</sub>
                     <div class="image">
-                    ${fileData.Type.startsWith("image")?`<img src="http://localhost:3000/${fileData.Name}" alt="${fileData.Name}">`:
+                    ${fileData.Type.startsWith("image")?`<img src="https://chat-app-h2gb.onrender.com/${fileData.Name}" alt="${fileData.Name}">`:
                     `<${fileData.Type.startsWith("video")?`video`:`audio`} controls> 
-                            <source src="http://localhost:3000/${fileData.Name}" type="audio/mpeg"> 
+                            <source src="https://chat-app-h2gb.onrender.com/${fileData.Name}" type="audio/mpeg"> 
                             Your browser does not support the audio tag. 
                         </${fileData.Type.startsWith("video")?`video`:`audio`}>`}
                         
-
                     </div>
                     
                 </div>
             </div>` 
 
             messages.insertAdjacentHTML('beforeend',messageElement)
+            window.scrollTo({top:document.body.scrollHeight,behavior:"smooth"})
         })
 
         socket.on("abruptDisconnection",(disconnectionMsg)=>{
@@ -392,6 +393,7 @@
                 document.body.insertAdjacentHTML('afterbegin',element)
                 errorElement = document.getElementById("error")
             }
+            window.scrollTo({top:0,behavior:"smooth"})
                 setTimeout(()=>{
                     errorElement.style.display="none"
                 },3000)
